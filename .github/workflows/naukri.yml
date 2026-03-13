@@ -2,7 +2,7 @@ name: Naukri Auto Apply
 
 on:
   schedule:
-    - cron: "35 10 * * *"   # 8 AM IST
+    - cron: "30 11 * * *"   # 8 AM IST
   workflow_dispatch:
 
 jobs:
