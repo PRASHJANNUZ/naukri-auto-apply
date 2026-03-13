@@ -1,6 +1,5 @@
 from playwright.sync_api import sync_playwright
 import os
-import time
 
 EMAIL = os.getenv("NAUKRI_EMAIL")
 PASSWORD = os.getenv("NAUKRI_PASSWORD")
@@ -9,70 +8,52 @@ with sync_playwright() as p:
 
     browser = p.chromium.launch(
         headless=True,
-        args=["--no-sandbox", "--disable-dev-shm-usage"]
+        args=[
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--disable-dev-shm-usage"
+        ]
     )
 
-    context = browser.new_context()
+    context = browser.new_context(
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+        viewport={"width": 1280, "height": 800}
+    )
+
     page = context.new_page()
 
-    print("Opening login page...")
+    print("Opening Naukri homepage")
+
+    page.goto("https://www.naukri.com", timeout=60000)
+    page.wait_for_load_state("networkidle")
+
+    print("Opening login page")
 
     page.goto("https://www.naukri.com/nlogin/login", timeout=60000)
 
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
 
-    # Wait for login fields
-    page.wait_for_selector('input[type="text"]', timeout=60000)
+    # Wait for email field
+    page.wait_for_selector('input[placeholder="Enter your active Email ID / Username"]', timeout=60000)
 
-    print("Entering credentials...")
+    print("Entering login credentials")
 
-    page.fill('input[type="text"]', EMAIL)
-    page.fill('input[type="password"]', PASSWORD)
+    page.fill('input[placeholder="Enter your active Email ID / Username"]', EMAIL)
+    page.fill('input[placeholder="Enter your password"]', PASSWORD)
 
     page.click('button[type="submit"]')
 
-    page.wait_for_timeout(8000)
+    page.wait_for_timeout(10000)
 
     print("Login attempted")
 
-    # Go to profile page
+    # Visit profile to refresh activity
     page.goto("https://www.naukri.com/mnjuser/profile", timeout=60000)
 
     page.wait_for_load_state("networkidle")
 
-    print("Profile page opened (this refreshes activity)")
-
-    # Open job search
-    page.goto("https://www.naukri.com/java-developer-jobs", timeout=60000)
-
-    page.wait_for_load_state("networkidle")
-
-    jobs = page.locator("a.title").all()
-
-    applied = 0
-
-    for job in jobs:
-
-        if applied >= 10:
-            break
-
-        try:
-            job.click()
-            page.wait_for_timeout(4000)
-
-            apply_btn = page.locator("button:has-text('Apply')")
-
-            if apply_btn.count() > 0:
-                apply_btn.first.click()
-                applied += 1
-                print("Applied to job", applied)
-
-            page.wait_for_timeout(4000)
-
-        except:
-            print("Skipping job")
-            continue
+    print("Profile opened successfully")
 
     browser.close()
 
-print("Script completed")
+print("Automation finished")
