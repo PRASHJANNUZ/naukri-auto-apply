@@ -7,36 +7,53 @@ PASSWORD = os.getenv("NAUKRI_PASSWORD")
 
 with sync_playwright() as p:
 
-    browser = p.chromium.launch(headless=True)
-    page = browser.new_page()
+    browser = p.chromium.launch(
+        headless=True,
+        args=["--no-sandbox", "--disable-dev-shm-usage"]
+    )
 
-    page.goto("https://www.naukri.com/nlogin/login")
+    context = browser.new_context()
+    page = context.new_page()
 
-    page.fill("#usernameField", EMAIL)
-    page.fill("#passwordField", PASSWORD)
+    print("Opening login page...")
 
-    page.click("button[type='submit']")
+    page.goto("https://www.naukri.com/nlogin/login", timeout=60000)
+
+    page.wait_for_load_state("networkidle")
+
+    # Wait for login fields
+    page.wait_for_selector('input[type="text"]', timeout=60000)
+
+    print("Entering credentials...")
+
+    page.fill('input[type="text"]', EMAIL)
+    page.fill('input[type="password"]', PASSWORD)
+
+    page.click('button[type="submit"]')
+
     page.wait_for_timeout(8000)
 
-    # Go to profile
-    page.goto("https://www.naukri.com/mnjuser/profile")
+    print("Login attempted")
 
-    page.wait_for_timeout(5000)
+    # Go to profile page
+    page.goto("https://www.naukri.com/mnjuser/profile", timeout=60000)
 
-    print("Profile refreshed")
+    page.wait_for_load_state("networkidle")
 
-    # Search Java jobs
-    page.goto("https://www.naukri.com/java-developer-jobs")
+    print("Profile page opened (this refreshes activity)")
 
-    page.wait_for_timeout(5000)
+    # Open job search
+    page.goto("https://www.naukri.com/java-developer-jobs", timeout=60000)
+
+    page.wait_for_load_state("networkidle")
 
     jobs = page.locator("a.title").all()
 
-    count = 0
+    applied = 0
 
     for job in jobs:
 
-        if count >= 20:
+        if applied >= 10:
             break
 
         try:
@@ -44,15 +61,18 @@ with sync_playwright() as p:
             page.wait_for_timeout(4000)
 
             apply_btn = page.locator("button:has-text('Apply')")
-            apply_btn.click()
 
-            print("Applied to job")
-
-            count += 1
+            if apply_btn.count() > 0:
+                apply_btn.first.click()
+                applied += 1
+                print("Applied to job", applied)
 
             page.wait_for_timeout(4000)
 
         except:
-            pass
+            print("Skipping job")
+            continue
 
     browser.close()
+
+print("Script completed")
