@@ -2,12 +2,15 @@ name: Naukri Auto Apply
 
 on:
   schedule:
-    - cron: "30 11 * * *"   # 8 AM IST
+    - cron: "30 2 * * *"   # 8 AM IST
   workflow_dispatch:
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
@@ -20,8 +23,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          playwright install
+          pip install playwright python-dotenv
+          playwright install --with-deps
 
       - name: Run Script
         env:
