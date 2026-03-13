@@ -2,8 +2,8 @@ from playwright.sync_api import sync_playwright
 import os
 import time
 
-EMAIL = os.getenv("prashantjannu1313@gmail.com")
-PASSWORD = os.getenv("Prashant302")
+EMAIL = os.getenv("NAUKRI_EMAIL")
+PASSWORD = os.getenv("NAUKRI_PASSWORD")
 
 with sync_playwright() as p:
 
